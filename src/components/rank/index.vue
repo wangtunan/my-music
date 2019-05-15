@@ -1,0 +1,10 @@
+<template>
+  <div class="rank">
+    rank
+  </div>
+</template>
+<script>
+export default {
+  name: 'RankIndex'
+}
+</script>

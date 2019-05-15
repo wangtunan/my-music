@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    hello,world
+    <m-header></m-header>
+    <tab></tab>
+    <keep-alive>
+      <router-view></router-view>
+    </keep-alive>
   </div>
 </template>
 
 <script>
+import MHeader from 'components/m-header/index.vue'
+import Tab from 'components/tab/index.vue'
 export default {
-  name: 'App'
+  name: 'App',
+  components: {
+    MHeader,
+    Tab
+  }
 }
 </script>
-<style lang="stylus" scoped>
-  @import '~common/stylus/variable.styl'
-  #app
-    color: $color-theme
-</style>
