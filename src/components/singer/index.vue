@@ -1,10 +1,15 @@
 <template>
   <div class="singer">
     <list-view :data="singerList" v-if="singerList.length"></list-view>
+    <!-- loading -->
+    <div class="loading-container" v-if="!singerList.length">
+      <loading></loading>
+    </div>
   </div>
 </template>
 <script>
-import ListView from 'base/listview/index'
+import Loading from 'base/loading/index.vue'
+import ListView from 'base/listview/listview.vue'
 import { getSingerList } from 'api/singer.js'
 import { ERR_OK } from 'api/config.js'
 import Singer from 'common/js/singer.js'
@@ -22,7 +27,8 @@ export default {
     }, 20)
   },
   components: {
-    ListView
+    ListView,
+    Loading
   },
   methods: {
     // 获取数据：获取歌手列表数据

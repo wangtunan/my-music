@@ -15,6 +15,10 @@ export default {
       type: Boolean,
       default: true
     },
+    listenScroll: {
+      type: Boolean,
+      default: false
+    },
     data: {
       type: Array,
       default: function () {
@@ -40,6 +44,14 @@ export default {
     refresh () {
       this.scroll && this.scroll.refresh()
     },
+    // 滚动组件：代理滚动到指定位置方法
+    scrollTo () {
+      this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+    },
+    // 滚动组件：代理滚动到指定元素方法
+    scrollToElement () {
+      this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+    },
     // 滚动组件：初始化
     _initScroll () {
       if (!this.$refs.scrollWrapper) {
@@ -53,6 +65,13 @@ export default {
         probeType: this.probeType,
         click: this.click
       })
+      // 是否监听滚动事件
+      if (this.listenScroll) {
+        let _self = this
+        this.scroll.on('scroll', (pos) => {
+          _self.$emit('scroll', pos)
+        })
+      }
     }
   },
   watch: {

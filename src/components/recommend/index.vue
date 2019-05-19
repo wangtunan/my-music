@@ -137,10 +137,4 @@ export default {
               color: $color-text
             .name
               color: $color-text-l
-    .loading-container
-      position: fixed
-      left: 50%
-      top: 50%
-      z-index: 99
-      transform: translate(-50%, -50%)
 </style>

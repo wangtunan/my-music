@@ -9,3 +9,8 @@ export function addClass (el, className) {
 export function hasClass (el, className) {
   return el.classList.contains(className)
 }
+// 获取元素的data扩展数据
+export function getData (el, name) {
+  let prefix = 'data-'
+  return el.getAttribute(prefix + name)
+}
