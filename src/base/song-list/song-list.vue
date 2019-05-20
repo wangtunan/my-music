@@ -23,7 +23,6 @@ export default {
   methods: {
     // 获取歌曲描述方法
     getSongDesc (song) {
-      console.log(song)
       return `${song.singer}。${song.album}`
     }
   }

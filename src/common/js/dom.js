@@ -14,3 +14,27 @@ export function getData (el, name) {
   let prefix = 'data-'
   return el.getAttribute(prefix + name)
 }
+
+// 获取浏览器厂商前缀
+let elementStyle = document.createElement('div').style
+let vender = (() => {
+  let transformNames = {
+    webkit: 'webkitTransform',
+    Moz: 'MozTransform',
+    O: 'OTransform',
+    ms: 'msTransform',
+    standard: 'transform'
+  }
+  for (const key in transformNames) {
+    if (elementStyle[transformNames[key]] !== undefined) {
+      return key
+    }
+  }
+  return false
+})()
+export function prefixStyle (style) {
+  if (vender === false) {
+    return false
+  }
+  return vender + style.charAt(0).toUpperCase() + style.substring(1)
+}
