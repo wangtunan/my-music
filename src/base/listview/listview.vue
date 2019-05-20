@@ -10,7 +10,7 @@
       <li v-for="(group,index) in data" :key="index" class="list-group" ref="listGroup">
         <h2 class="list-group-title">{{group.name}}</h2>
         <ul>
-          <li class="list-group-item" v-for="(item, index) in group.items" :key="index">
+          <li class="list-group-item" v-for="(item, index) in group.items" :key="index" @click="handleItemClick(item)">
             <img v-lazy="item.avatar" alt="" class="avatar">
             <span class="name">{{item.name}}</span>
           </li>
@@ -44,6 +44,7 @@
 <script>
 import Scroll from 'base/scroll/index.vue'
 import { getData } from 'common/js/dom.js'
+import { mapMutations } from 'vuex'
 const SHORTCUT_HEIGHT = 18
 const TITLE_HEIGHT = 30
 export default {
@@ -97,6 +98,11 @@ export default {
     Scroll
   },
   methods: {
+    // 列表：点击事件
+    handleItemClick (item) {
+      this.$emit('select', item)
+      this.setSinger(item)
+    },
     // 列表：滚动事件
     handleListViewScroll (pos) {
       this.scrollY = pos.y
@@ -142,7 +148,10 @@ export default {
         height += item.clientHeight
         this.listHeightArr.push(height)
       }
-    }
+    },
+    ...mapMutations({
+      setSinger: 'SET_SINGER'
+    })
   },
   watch: {
     scrollY (newY) {

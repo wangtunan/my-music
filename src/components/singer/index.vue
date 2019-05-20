@@ -1,6 +1,8 @@
 <template>
   <div class="singer">
-    <list-view :data="singerList" v-if="singerList.length"></list-view>
+    <list-view :data="singerList" v-if="singerList.length" @select="handleItemSelect"></list-view>
+    <!-- 路由 -->
+    <router-view></router-view>
     <!-- loading -->
     <div class="loading-container" v-if="!singerList.length">
       <loading></loading>
@@ -31,6 +33,12 @@ export default {
     Loading
   },
   methods: {
+    // 列表：点击事件
+    handleItemSelect (item) {
+      this.$router.push({
+        path: `/singer/${item.id}`
+      })
+    },
     // 获取数据：获取歌手列表数据
     _getSingerList () {
       getSingerList().then((res) => {
