@@ -1,7 +1,7 @@
 <template>
   <div class="song-list">
     <ul>
-      <li class="item" v-for="song in songs" :key="song.id">
+      <li class="item" v-for="(song,index) in songs" :key="song.id" @click="handleSongClick(song,index)">
         <div class="content">
           <h2 class="name">{{song.name}}</h2>
           <p class="desc">{{getSongDesc(song)}}</p>
@@ -21,6 +21,10 @@ export default {
     }
   },
   methods: {
+    // 歌曲点击事件
+    handleSongClick (item, index) {
+      this.$emit('select', item, index)
+    },
     // 获取歌曲描述方法
     getSongDesc (song) {
       return `${song.singer}。${song.album}`

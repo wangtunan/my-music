@@ -20,7 +20,7 @@
     <scroll :data="songs" :probe-type="probeType" :listenScroll="listenScroll" @scroll="handleSongsScroll" ref="list" class="list">
       <!-- 歌曲列表 -->
       <div class="songs-wrapper">
-        <song-list :songs="songs"></song-list>
+        <song-list :songs="songs" @select="handleSongSelect"></song-list>
       </div>
       <!-- loading -->
       <div class="loading-container" v-if="!songs.length">
@@ -34,6 +34,7 @@ import Loading from 'base/loading/index.vue'
 import Scroll from 'base/scroll/index.vue'
 import SongList from 'base/song-list/song-list.vue'
 import { prefixStyle } from 'common/js/dom.js'
+import { mapActions } from 'vuex'
 const TITLE_HEIGHT = 40
 const transform = prefixStyle('transform')
 const backdrop = prefixStyle('backdrop-filter')
@@ -79,10 +80,20 @@ export default {
     handleBackClick () {
       this.$router.back()
     },
+    // 歌曲列表：选择事件
+    handleSongSelect (item, index) {
+      this.selectPlay({
+        list: this.songs,
+        index: index
+      })
+    },
     // 歌曲列表：歌曲列表滚动事件
     handleSongsScroll (pos) {
       this.scrollY = pos.y
-    }
+    },
+    ...mapActions([
+      'selectPlay'
+    ])
   },
   watch: {
     scrollY (newY) {
