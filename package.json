@@ -11,15 +11,17 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "vue": "^2.5.2",
-    "vuex": "^3.1.1",
-    "vue-router": "^3.0.1",
-    "fastclick": "^1.0.6",
-    "babel-runtime": "^6.26.0",
-    "jsonp": "^0.2.1",
-    "better-scroll": "^1.15.2",
     "axios": "^0.18.0",
-    "vue-lazyload": "^1.2.6"
+    "babel-runtime": "^6.26.0",
+    "better-scroll": "^1.15.2",
+    "body-parser": "^1.19.0",
+    "create-keyframe-animation": "^0.1.0",
+    "fastclick": "^1.0.6",
+    "jsonp": "^0.2.1",
+    "vue": "^2.5.2",
+    "vue-lazyload": "^1.2.6",
+    "vue-router": "^3.0.1",
+    "vuex": "^3.1.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

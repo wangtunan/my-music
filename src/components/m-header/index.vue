@@ -24,7 +24,8 @@ export default {
       display: inline-block
       vertical-align: middle
     .icon
-      margin-right: 4px
+      margin-top: -4px
+      margin-right: 6px
       width: 30px
       height: 32px
       bg-image('logo')

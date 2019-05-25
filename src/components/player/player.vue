@@ -1,7 +1,7 @@
 <template>
   <div class="player" v-show="playList.length > 0">
     <!-- 常规播放器 -->
-    <transition name="normal">
+    <transition name="normal" @enter="handleEnter" @after-enter="handleAfterEnter" @leave="handleLeave" @after-leave="handleAfterLeave">
       <div class="normal-player" v-show="fullScreen">
         <!-- 背景图片 -->
         <div class="background">
@@ -18,7 +18,7 @@
         <!-- 中部 -->
         <div class="middle">
           <div class="middle-l">
-            <div class="cd-wrapper">
+            <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd">
                 <img :src="currentSong.image" alt="" width="100%" height="100%">
               </div>
@@ -59,16 +59,24 @@
           <h2 class="name">{{currentSong.name}}</h2>
           <p class="desc">{{currentSong.singer}}</p>
         </div>
-        <div class="control"></div>
+        <div class="control">
+          <div class="progress-circle">
+            <i class="icon-mini icon-play-mini"></i>
+          </div>
+        </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
+    <audio :src="currentSong.url" ref="audio"></audio>
   </div>
 </template>
 <script>
+import Animations from 'create-keyframe-animation'
 import { mapGetters, mapMutations } from 'vuex'
+import { prefixStyle } from 'common/js/dom.js'
+const transform = prefixStyle('transform')
 export default {
   data () {
     return {
@@ -87,13 +95,83 @@ export default {
     handleBackClick () {
       this.setFullScreen(false)
     },
+    // 常规播放器：开始进入
+    handleEnter (el, done) {
+      let { x, y, scale } = this._getPosAndScale()
+      let animation = {
+        '0%': {
+          transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+        },
+        '60%': {
+          transform: `translate3d(0, 0, 0) scale(1.1))`
+        },
+        '100%': {
+          transform: `translate3d(0, 0, 0) scale(1))`
+        }
+      }
+      Animations.registerAnimation({
+        name: 'move',
+        animation: animation,
+        presets: {
+          duration: 400,
+          easing: 'linear'
+        }
+      })
+      Animations.runAnimation(this.$refs.cdWrapper, 'move', done)
+    },
+    // 常规播放器：进入完毕
+    handleAfterEnter () {
+      Animations.unregisterAnimation('move')
+      this.$refs.cdWrapper.animation = ''
+    },
+    // 常规播放器：开始离开
+    handleLeave (el, done) {
+      let { x, y, scale } = this._getPosAndScale()
+      let cdWrapper = this.$refs.cdWrapper
+      cdWrapper.style.transition = 'all 0.4s'
+      cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+      const timer = setTimeout(done, 400)
+      cdWrapper.addEventListener('transitionend', () => {
+        clearTimeout(timer)
+        done()
+      })
+    },
+    // 常规播放器：离开完毕
+    handleAfterLeave () {
+      let cdWrapper = this.$refs.cdWrapper
+      cdWrapper.style.transition = ''
+      cdWrapper.style[transform] = ''
+    },
     // 迷你播放器：点击事件
     handleMiniPlayerClick () {
       this.setFullScreen(true)
     },
+    // 获取初始位置和缩放级别
+    _getPosAndScale () {
+      let targetWidth = 40
+      let paddingLeft = 40
+      let paddingBottom = 30
+      let paddingTop = 80
+      let width = window.innerWidth * 0.8
+      const scale = targetWidth / width
+      const x = -(window.innerWidth / 2 - paddingLeft)
+      const y = window.innerHeight - width / 2 - paddingBottom - paddingTop
+      return {
+        x,
+        y,
+        scale
+      }
+    },
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN'
     })
+  },
+  watch: {
+    currentSong () {
+      this.$nextTick(() => {
+        this.$refs.audio.play()
+      })
+    }
   }
 }
 </script>
@@ -247,7 +325,16 @@ export default {
         flex: 0 0 30px
         width: 30px
         padding: 0 10px
-        .icon-playlist
+        .progress-circle
+          position: relative
+          width: 32px
+          height: 32px
+          .icon-mini
+            position: absolute
+            left: 0
+            top: 0
+            font-size: 32px
+        .icon-playlist,.icon-play-mini
           font-size: 30px
           color: $color-theme
 </style>
