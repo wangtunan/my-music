@@ -37,8 +37,8 @@
           </div>
           <!-- 底部操作按钮 -->
           <div class="operators">
-            <div class="icon icon-left">
-              <i class="icon-sequence"></i>
+            <div class="icon icon-left" @click="handleModeClick">
+              <i :class="iconMode"></i>
             </div>
             <div class="icon icon-left">
               <i class="icon-prev" @click="handlePrevClick"></i>
@@ -69,27 +69,31 @@
           <p class="desc">{{currentSong.singer}}</p>
         </div>
         <div class="control">
-          <div class="progress-circle" @click.stop="handelTogglePlay">
-            <i class="icon-mini" :class="iconMini"></i>
-          </div>
+          <progress-circle :radius="radius" :percent="percent">
+            <i class="icon-mini" :class="iconMini" @click.stop="handelTogglePlay"></i>
+          </progress-circle>
         </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
-    <audio :src="currentSong.url" @canplay="handleAudioReady" @error="handleAudioError" ref="audio" @timeupdate="handleTimeUpdate"></audio>
+    <audio :src="currentSong.url" @canplay="handleAudioReady" @error="handleAudioError" ref="audio" @timeupdate="handleTimeUpdate" @ended="handleAuduoEnd"></audio>
   </div>
 </template>
 <script>
 import ProgressBar from 'base/progress-bar/progress-bar.vue'
+import ProgressCircle from 'base/progress-circle/progress-circle.vue'
 import Animations from 'create-keyframe-animation'
 import { mapGetters, mapMutations } from 'vuex'
 import { prefixStyle } from 'common/js/dom.js'
+import { playMode } from 'common/js/config.js'
+import { shuffle } from 'common/js/utils.js'
 const transform = prefixStyle('transform')
 export default {
   data () {
     return {
+      radius: 32, // 迷你播放器的半径
       currentTime: 0, // 歌曲当前播放时间
       songReady: false // 歌曲准备完毕
     }
@@ -102,6 +106,17 @@ export default {
     // 计算属性：计算迷你播放or暂停的样式
     iconMini () {
       return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
+    },
+    // 计算属性：计算播放模式样式
+    iconMode () {
+      let mode = ''
+      for (const key in playMode) {
+        if (playMode[key] === this.mode) {
+          mode = key
+          break
+        }
+      }
+      return `icon-${mode}`
     },
     // 计算属性：计算播放器CD的动画样式
     cdClass () {
@@ -116,7 +131,9 @@ export default {
       'playList',
       'currentSong',
       'playing',
-      'currentIndex'
+      'currentIndex',
+      'mode',
+      'sequenceList'
     ])
   },
   methods: {
@@ -214,6 +231,22 @@ export default {
     handleTimeUpdate (e) {
       this.currentTime = e.target.currentTime
     },
+    // 常规播放器：歌曲播放完毕
+    handleAuduoEnd () {
+      this.currentTime = 0
+      if (this.mode === playMode.loop) {
+        this.handleLoopPlay()
+      } else {
+        this.handleNextClick()
+      }
+    },
+    // 常规播放器：循环播放
+    handleLoopPlay () {
+      let audio = this.$refs.audio
+      audio.currentTime = 0
+      audio.play()
+      this.setPlaying(true)
+    },
     // 常规播放器：进度条进度改变事件
     handlePercentChangIng (percent) {
       this.currentTime = this.currentSong.duration * percent
@@ -226,6 +259,21 @@ export default {
         this.handelTogglePlay()
       }
     },
+    // 常规播放器：播放模式点击事件
+    handleModeClick () {
+      const mode = (this.mode + 1) % 3
+      this.setPlayMode(mode)
+
+      // 处理随机播放
+      let list = []
+      if (this.mode === playMode.random) {
+        list = shuffle(this.sequenceList)
+      } else {
+        list = this.sequenceList
+      }
+      this.resetCurrentIndex(list)
+      this.setPlayList(list)
+    },
     // 迷你播放器：点击事件
     handleMiniPlayerClick () {
       this.setFullScreen(true)
@@ -236,6 +284,13 @@ export default {
       let minute = time / 60 | 0
       let second = time % 60 | 0
       return `${minute}:${second < 10 ? '0' + second : second}`
+    },
+    // 重置当前歌曲的索引
+    resetCurrentIndex (list) {
+      let findIndex = list.findIndex(item => {
+        return item.id === this.currentSong.id
+      })
+      this.setCurrentIndex(findIndex)
     },
     // 获取初始位置和缩放级别
     _getPosAndScale () {
@@ -256,11 +311,16 @@ export default {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
       setPlaying: 'SET_PLAYING',
-      setCurrentIndex: 'SET_CURRENT_INDEX'
+      setCurrentIndex: 'SET_CURRENT_INDEX',
+      setPlayMode: 'SET_MODE',
+      setPlayList: 'SET_PLAY_LIST'
     })
   },
   watch: {
-    currentSong () {
+    currentSong (newSong, oldSong) {
+      if (newSong.id === oldSong.id) {
+        return
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
@@ -273,7 +333,8 @@ export default {
     }
   },
   components: {
-    ProgressBar
+    ProgressBar,
+    ProgressCircle
   }
 }
 </script>
@@ -455,16 +516,12 @@ export default {
         flex: 0 0 30px
         width: 30px
         padding: 0 10px
-        .progress-circle
-          position: relative
-          width: 32px
-          height: 32px
-          .icon-mini
-            position: absolute
-            left: 0
-            top: 0
-            font-size: 32px
         .icon-playlist,.icon-play-mini,.icon-pause-mini
           font-size: 30px
-          color: rgba(255,205,49,0.5)
+          color: $color-theme-d
+        .icon-mini
+          position: absolute
+          left: 0
+          top: 0
+          font-size: 32px
 </style>

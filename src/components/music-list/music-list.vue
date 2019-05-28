@@ -7,7 +7,7 @@
     <div class="bg-image" :style="bgStyle" ref="bgImage">
       <!-- 播放按钮 -->
       <div class="play-container">
-        <div class="play" ref="playBtn">
+        <div class="play" ref="playBtn" @click="handleRandomPlay">
           <i class="icon-play"></i>
           <span class="text">随机播放全部</span>
         </div>
@@ -87,12 +87,19 @@ export default {
         index: index
       })
     },
+    // 歌曲列表：随机播放全部
+    handleRandomPlay () {
+      this.randomPlay({
+        list: this.songs
+      })
+    },
     // 歌曲列表：歌曲列表滚动事件
     handleSongsScroll (pos) {
       this.scrollY = pos.y
     },
     ...mapActions([
-      'selectPlay'
+      'selectPlay',
+      'randomPlay'
     ])
   },
   watch: {
