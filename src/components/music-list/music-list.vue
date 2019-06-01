@@ -20,7 +20,7 @@
     <scroll :data="songs" :probe-type="probeType" :listenScroll="listenScroll" @scroll="handleSongsScroll" ref="list" class="list">
       <!-- 歌曲列表 -->
       <div class="songs-wrapper">
-        <song-list :songs="songs" @select="handleSongSelect"></song-list>
+        <song-list :songs="songs" @select="handleSongSelect" :show-rank="showRank"></song-list>
       </div>
       <!-- loading -->
       <div class="loading-container" v-if="!songs.length">
@@ -55,6 +55,10 @@ export default {
       default () {
         return []
       }
+    },
+    showRank: {
+      type: Boolean,
+      default: false
     }
   },
   data () {

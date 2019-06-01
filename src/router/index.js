@@ -21,7 +21,14 @@ export default new Router({
         { path: ':id', component: () => import('components/singer-detail/singer-detail.vue') }
       ]
     },
-    { path: '/rank', name: 'RankIndex', component: () => import('components/rank/index') },
+    {
+      path: '/rank',
+      name: 'RankIndex',
+      component: () => import('components/rank/index'),
+      children: [
+        { path: ':id', component: () => import('components/top-list/top-list.vue') }
+      ]
+    },
     { path: '/search', name: 'SearchIndex', component: () => import('components/search/index') }
   ]
 })

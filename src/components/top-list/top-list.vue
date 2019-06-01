@@ -1,46 +1,45 @@
 <template>
   <transition appear name="slide">
-    <div class="disc">
-      <music-list :songs="songList" :title="disc.dissname" :bg-image="disc.imgurl"></music-list>
+    <div class="top-list">
+      <music-list :title="topList.topTitle" :bg-image="bgImage" :songs="songList" :show-rank="showRank"></music-list>
     </div>
   </transition>
 </template>
 <script>
 import MusicList from 'components/music-list/music-list.vue'
 import { mapGetters } from 'vuex'
-import { getSongList } from 'api/recommend.js'
+import { getMusicList } from 'api/rank.js'
 import { ERR_OK } from 'api/config.js'
 import { createSong, processSongsUrl, isValidMusic } from 'common/js/song.js'
 export default {
   data () {
     return {
-      songList: []
+      songList: [],
+      showRank: true
     }
   },
-  computed: {
-    ...mapGetters(['disc'])
-  },
   created () {
-    this._getSongList()
+    this._getMusicList()
   },
   methods: {
-    // 获取推荐歌单列表
-    _getSongList () {
-      if (!this.disc.dissid) {
-        this.$router.push('/recommend')
+    // 获取榜单详情
+    _getMusicList () {
+      if (!this.topList.id) {
+        this.$router.push('/rank')
         return
       }
-      getSongList(this.disc.dissid).then(res => {
+      getMusicList(this.topList.id).then((res) => {
         if (res.code === ERR_OK) {
-          processSongsUrl(this._normalizeSons(res.cdlist[0].songlist)).then((list) => {
+          processSongsUrl(this._normalizeSongs(res.songlist)).then((list) => {
             this.songList = list
           })
         }
       })
     },
-    _normalizeSons (list) {
+    _normalizeSongs (list) {
       let rect = []
-      list.forEach(musicData => {
+      list.forEach(item => {
+        let musicData = item.data
         if (isValidMusic(musicData)) {
           rect.push(createSong(musicData))
         }
@@ -48,11 +47,20 @@ export default {
       return rect
     }
   },
+  computed: {
+    bgImage () {
+      return this.songList.length > 0 ? this.songList[0].image : ''
+    },
+    ...mapGetters([
+      'topList'
+    ])
+  },
   components: {
     MusicList
   }
 }
 </script>
+
 <style lang="stylus" scoped>
   @import '~common/stylus/variable.styl';
 
@@ -62,7 +70,7 @@ export default {
   .slide-enter, .slide-leave-to
     transform: translate3d(100%, 0, 0)
 
-  .disc {
+  .top-list {
     z-index: 100;
     position: fixed;
     left: 0;
