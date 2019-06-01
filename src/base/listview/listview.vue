@@ -127,6 +127,9 @@ export default {
     handleShortcutTouchEnd (e) {
       this.showCurShortcut = false
     },
+    refresh () {
+      this.$refs.listview.refresh()
+    },
     // 快速入口：滚动到指定元素
     _scrollToElement (index) {
       if (index <= 0) {

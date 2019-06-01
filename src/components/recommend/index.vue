@@ -1,5 +1,5 @@
 <template>
-  <div class="recommend">
+  <div class="recommend" ref="recommend">
     <scroll class="recommend-content" :data="discList" ref="scroll">
       <div>
         <!-- 滚动轮播 -->
@@ -42,8 +42,10 @@ import Slider from 'base/slider/index.vue'
 import Loading from 'base/loading/index.vue'
 import { getRecommend, getDiscList } from 'api/recommend.js'
 import { ERR_OK } from 'api/config.js'
+import { playListMixin } from 'common/js/mixin.js'
 export default {
   name: 'RecommendIndex',
+  mixins: [playListMixin],
   data () {
     return {
       sliderList: [], // 滚动轮播数据
@@ -67,6 +69,12 @@ export default {
         this.isCheckLoading = true
         this.$refs.scroll.refresh()
       }
+    },
+    // 列表：计算bottom
+    handlePlayList (list) {
+      let bottom = list.length > 0 ? '60px' : ''
+      this.$refs.recommend.style.bottom = bottom
+      this.$refs.scroll.refresh()
     },
     // 获取数据：获取轮播数据
     _getRecommendList () {

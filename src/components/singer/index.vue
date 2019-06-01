@@ -1,6 +1,6 @@
 <template>
-  <div class="singer">
-    <list-view :data="singerList" v-if="singerList.length" @select="handleItemSelect"></list-view>
+  <div class="singer" ref="singer">
+    <list-view :data="singerList" v-if="singerList.length" @select="handleItemSelect" ref="singerList"></list-view>
     <!-- 路由 -->
     <router-view></router-view>
     <!-- loading -->
@@ -12,12 +12,14 @@
 <script>
 import Loading from 'base/loading/index.vue'
 import ListView from 'base/listview/listview.vue'
+import { playListMixin } from 'common/js/mixin.js'
 import { getSingerList } from 'api/singer.js'
 import { ERR_OK } from 'api/config.js'
 import Singer from 'common/js/singer.js'
 const HOT_NAME = '热门'
 const HOT_LENGTH = 10
 export default {
+  mixins: [playListMixin],
   data () {
     return {
       singerList: []
@@ -33,6 +35,12 @@ export default {
     Loading
   },
   methods: {
+    // 列表：计算bottom
+    handlePlayList (list) {
+      let bottom = list.length > 0 ? '60px' : ''
+      this.$refs.singer.style.bottom = bottom
+      this.$refs.singerList && this.$refs.singerList.refresh()
+    },
     // 列表：点击事件
     handleItemSelect (item) {
       this.$router.push({

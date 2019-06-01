@@ -16,17 +16,41 @@
           <h2 class="subtitle">{{currentSong.singer}}</h2>
         </div>
         <!-- 中部 -->
-        <div class="middle">
-          <div class="middle-l">
+        <div class="middle"
+          @touchstart.prevent="handleMiddleTouchStart"
+          @touchmove.prevent="handleMiddleTouchMove"
+          @touchend="handleMiddleTouchEnd"
+          >
+          <div class="middle-l" ref="middleL">
             <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd">
                 <img :src="currentSong.image" :class="cdClass" alt="" width="100%" height="100%">
               </div>
             </div>
+            <div class="play-lyric-wrapper">
+              <p class="play-lyric">{{playLyric}}</p>
+            </div>
           </div>
+          <scroll class="middle-r" ref="lyricList" :data="currentLyric && currentLyric.lines">
+            <div class="lyric-wrapper">
+              <div v-if="currentLyric">
+                <p
+                  ref="lyricLine"
+                  class="lyric"
+                  v-for="(item, index) in currentLyric.lines"
+                  :class="{active: currentLineNumber === index}"
+                  :key="index">{{item.txt}}</p>
+              </div>
+            </div>
+          </scroll>
         </div>
         <!-- 底部 -->
         <div class="bottom">
+          <!--  歌曲和歌词dot -->
+          <div class="dot-wrapper">
+            <div class="dot" :class="{active: currentShow === 'cd'}"></div>
+            <div class="dot" :class="{active: currentShow === 'lyric'}"></div>
+          </div>
           <!-- 底部进度条 -->
           <div class="progress-wrapper">
             <span class="time time-left">{{formatTime(currentTime)}}</span>
@@ -84,19 +108,29 @@
 <script>
 import ProgressBar from 'base/progress-bar/progress-bar.vue'
 import ProgressCircle from 'base/progress-circle/progress-circle.vue'
+import Scroll from 'base/scroll/index.vue'
 import Animations from 'create-keyframe-animation'
+import LyricParser from 'lyric-parser'
 import { mapGetters, mapMutations } from 'vuex'
 import { prefixStyle } from 'common/js/dom.js'
 import { playMode } from 'common/js/config.js'
 import { shuffle } from 'common/js/utils.js'
 const transform = prefixStyle('transform')
+const transitionDuration = prefixStyle('transitionDuration')
 export default {
   data () {
     return {
+      playLyric: '', // 当前播放的歌词
+      currentShow: 'cd', // 当前展示的是cd或者歌词
+      currentLineNumber: 0, // 当前歌词的行数
+      currentLyric: null, // 歌词
       radius: 32, // 迷你播放器的半径
       currentTime: 0, // 歌曲当前播放时间
       songReady: false // 歌曲准备完毕
     }
+  },
+  created () {
+    this.touch = {}
   },
   computed: {
     // 计算属性：计算播放or暂停的样式
@@ -194,30 +228,43 @@ export default {
         return
       }
       this.setPlaying(!this.playing)
+      this.currentLyric && this.currentLyric.togglePlay()
     },
     // 常规播放器：上一曲
     handlePrevClick () {
       if (!this.songReady) {
         return
       }
-      let index = this.currentIndex - 1
-      if (index === -1) {
-        index = this.playList.length - 1
+      if (this.playList.length === 1) {
+        this.handleLoopPlay()
+      } else {
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playList.length - 1
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.handelTogglePlay()
+        }
       }
-      this.setCurrentIndex(index)
-      this.songReady = false
     },
     // 常规播放器：下一曲
     handleNextClick () {
       if (!this.songReady) {
         return
       }
-      let index = this.currentIndex + 1
-      if (index === this.playList.length) {
-        index = 0
+      if (this.playList.length === 1) {
+        this.handleLoopPlay()
+      } else {
+        let index = this.currentIndex + 1
+        if (index === this.playList.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.handelTogglePlay()
+        }
       }
-      this.setCurrentIndex(index)
-      this.songReady = false
     },
     // 常规播放器：音频准备完毕
     handleAudioReady () {
@@ -246,6 +293,7 @@ export default {
       audio.currentTime = 0
       audio.play()
       this.setPlaying(true)
+      this.currentLyric && this.currentLyric.seek(0)
     },
     // 常规播放器：进度条进度改变事件
     handlePercentChangIng (percent) {
@@ -258,6 +306,7 @@ export default {
       if (!this.playing) {
         this.handelTogglePlay()
       }
+      this.currentShow && this.currentLyric.seek(this.currentTime * 1000)
     },
     // 常规播放器：播放模式点击事件
     handleModeClick () {
@@ -273,6 +322,92 @@ export default {
       }
       this.resetCurrentIndex(list)
       this.setPlayList(list)
+    },
+    // 常规播放器：获取歌词
+    handleGetLyric () {
+      this.currentSong.getLyric().then(lyric => {
+        this.currentLyric = new LyricParser(lyric, this.handleLyricPlay)
+        if (this.playing) {
+          this.currentLyric.play()
+        }
+      }).catch(() => {
+        this.currentLyric = null
+        this.currentLineNumber = 0
+        this.playLyric = ''
+      })
+    },
+    // 常规播放器：歌曲播放事件
+    handleLyricPlay ({ lineNum, txt }) {
+      if (!this.$refs.lyricLine) {
+        return
+      }
+      this.currentLineNumber = lineNum
+      if (lineNum > 5) {
+        let lineElement = this.$refs.lyricLine[lineNum - 5]
+        this.$refs.lyricList.scrollToElement(lineElement, 1000)
+      } else {
+        this.$refs.lyricList.scrollTo(0, 0, 1000)
+      }
+      this.playLyric = txt
+    },
+    // 常规播放器：中部touch-start事件
+    handleMiddleTouchStart (e) {
+      this.touch.inited = true
+      this.touch.startX = e.touches[0].pageX
+      this.touch.startY = e.touches[0].pageY
+    },
+    handleMiddleTouchMove (e) {
+      if (!this.touch.inited) {
+        return
+      }
+      let touch = e.touches[0]
+      let deltax = touch.pageX - this.touch.startX
+      let deltay = touch.pageY - this.touch.startY
+      let lyricList = this.$refs.lyricList.$el
+      let middleL = this.$refs.middleL
+      if (Math.abs(deltay) > Math.abs(deltax)) {
+        return
+      }
+      let windowWidth = window.innerWidth
+      let left = this.currentShow === 'cd' ? 0 : -windowWidth
+      let width = Math.min(0, Math.max(-windowWidth, left + deltax))
+      this.touch.percent = Math.abs(width / windowWidth)
+      lyricList.style[transform] = `translate3d(${width}px, 0, 0)`
+      lyricList.style[transitionDuration] = 0
+      middleL.style.opacity = 1 - this.touch.percent
+      middleL.style[transitionDuration] = 0
+    },
+    handleMiddleTouchEnd () {
+      let durationTime = 300
+      let width = 0
+      let opacity = 0
+      let windowWidth = window.innerWidth
+      let lyricList = this.$refs.lyricList.$el
+      let middleL = this.$refs.middleL
+      if (this.currentShow === 'cd') {
+        if (this.touch.percent > 0.1) {
+          width = -windowWidth
+          opacity = 0
+          this.currentShow = 'lyric'
+        } else {
+          width = 0
+          opacity = 1
+        }
+      } else {
+        if (this.touch.percent < 0.9) {
+          width = 0
+          opacity = 1
+          this.currentShow = 'cd'
+        } else {
+          width = -windowWidth
+          opacity = 0
+        }
+      }
+      lyricList.style[transform] = `translate3d(${width}px, 0, 0)`
+      lyricList.style[transitionDuration] = `${durationTime}ms`
+      middleL.style.opacity = opacity
+      middleL.style[transitionDuration] = `${durationTime}ms`
+      this.touch.inited = false
     },
     // 迷你播放器：点击事件
     handleMiniPlayerClick () {
@@ -321,9 +456,16 @@ export default {
       if (newSong.id === oldSong.id) {
         return
       }
+      if (this.currentLyric) {
+        this.currentLyric.stop()
+        this.currentLineNumber = 0
+        this.currentTime = 0
+        this.currentLyric = null
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
+      this.handleGetLyric()
     },
     playing (newVal) {
       let audio = this.$refs.audio
@@ -334,7 +476,8 @@ export default {
   },
   components: {
     ProgressBar,
-    ProgressCircle
+    ProgressCircle,
+    Scroll
   }
 }
 </script>
@@ -413,11 +556,25 @@ export default {
         top: 80px
         bottom: 170px
         width: 100%
+        font-size: 0
+        white-space: nowrap
         .middle-l
+          display: inline-block
+          vertical-align: top
           position: relative
           width: 100%
           height: 0
           padding-top: 80%
+          .play-lyric-wrapper
+            margin: 30px auto 0 auto
+            width: 80%
+            text-align: center
+            overflow: hidden
+            .play-lyric
+              height: 20px
+              line-height: 20px
+              font-size: $font-size-medium
+              color: $color-text
           .cd-wrapper
             position: absolute
             left: 10%
@@ -439,11 +596,43 @@ export default {
                   animation: rotate 20s linear infinite
                 &.pause
                   animation-play-state: paused
+        .middle-r
+          display: inline-block
+          width: 100%
+          height: 100%
+          vertical-align: top
+          overflow: hidden
+          .lyric-wrapper
+            margin: 0 auto
+            width: 80%
+            text-align: center
+            overflow: hidden
+            .lyric
+              line-height: 32px
+              font-size: $font-size-medium
+              color: $color-text-l
+              &.active
+                color: $color-text
       .bottom
         position: absolute
         left: 0
         right: 0
         bottom: 50px
+        .dot-wrapper
+          text-align: center
+          font-size: 0
+          .dot
+            display: inline-block
+            vertical-align: middle
+            margin: 0 4px
+            width: 8px
+            height: 8px
+            border-radius: 50%
+            background: $color-text-l
+            &.active
+              width: 20px
+              border-radius: 5px
+              color: $color-text-ll
         .progress-wrapper
           display: flex
           align-items: center

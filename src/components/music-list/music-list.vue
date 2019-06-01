@@ -33,12 +33,14 @@
 import Loading from 'base/loading/index.vue'
 import Scroll from 'base/scroll/index.vue'
 import SongList from 'base/song-list/song-list.vue'
+import { playListMixin } from 'common/js/mixin.js'
 import { prefixStyle } from 'common/js/dom.js'
 import { mapActions } from 'vuex'
 const TITLE_HEIGHT = 40
 const transform = prefixStyle('transform')
 const backdrop = prefixStyle('backdrop-filter')
 export default {
+  mixins: [playListMixin],
   props: {
     title: {
       type: String,
@@ -79,6 +81,12 @@ export default {
     // 返回：点击事件
     handleBackClick () {
       this.$router.back()
+    },
+    // 歌曲列表：计算bottom
+    handlePlayList (list) {
+      let bottom = list.length > 0 ? '60px' : ''
+      this.$refs.list.$el.style.bottom = bottom
+      this.$refs.list.refresh()
     },
     // 歌曲列表：选择事件
     handleSongSelect (item, index) {
@@ -222,7 +230,7 @@ export default {
       left: 0
       top: 0
       width: 100%
-      height: 100%
+      bottom: 0
       background: $color-background
       .songs-wrapper
         padding: 20px 30px
