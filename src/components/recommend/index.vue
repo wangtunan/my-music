@@ -18,7 +18,7 @@
         <div class="recommend-list">
           <h1 class="list-title">热门歌单推荐</h1>
           <ul>
-            <li class="item" v-for="item in discList" :key="item.dissid">
+            <li class="item" v-for="item in discList" :key="item.dissid" @click="handleItemClick(item)">
               <div class="img-wrapper">
                 <img v-lazy="item.imgurl" width="60" height="60" alt="">
               </div>
@@ -34,6 +34,7 @@
     <div class="loading-container" v-if="!discList.length">
       <loading></loading>
     </div>
+    <router-view></router-view>
   </div>
 </template>
 <script>
@@ -43,6 +44,7 @@ import Loading from 'base/loading/index.vue'
 import { getRecommend, getDiscList } from 'api/recommend.js'
 import { ERR_OK } from 'api/config.js'
 import { playListMixin } from 'common/js/mixin.js'
+import { mapMutations } from 'vuex'
 export default {
   name: 'RecommendIndex',
   mixins: [playListMixin],
@@ -76,6 +78,11 @@ export default {
       this.$refs.recommend.style.bottom = bottom
       this.$refs.scroll.refresh()
     },
+    // 列表：点击事件
+    handleItemClick (item) {
+      this.$router.push(`/recommend/${item.dissid}`)
+      this.setDisc(item)
+    },
     // 获取数据：获取轮播数据
     _getRecommendList () {
       getRecommend().then((res) => {
@@ -91,7 +98,10 @@ export default {
           this.discList = res.data.list
         }
       })
-    }
+    },
+    ...mapMutations({
+      'setDisc': 'SET_DISC'
+    })
   }
 }
 </script>

@@ -5,7 +5,14 @@ Vue.use(Router)
 export default new Router({
   routes: [
     { path: '/', redirect: '/recommend' },
-    { path: '/recommend', name: 'RecommendIndex', component: () => import('components/recommend/index') },
+    {
+      path: '/recommend',
+      name: 'RecommendIndex',
+      component: () => import('components/recommend/index'),
+      children: [
+        { path: ':id', component: () => import('components/disc/disc.vue') }
+      ]
+    },
     {
       path: '/singer',
       name: 'SingerIndex',
