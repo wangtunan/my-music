@@ -1,7 +1,13 @@
 import * as types from './mutation-types'
 import { playMode } from 'common/js/config.js'
 import { shuffle } from 'common/js/utils.js'
+import { saveSearch, deleteSearch, clearSearch } from 'common/js/cache.js'
 
+function findIndex (list, song) {
+  return list.findIndex(item => {
+    return item.id === song.id
+  })
+}
 export const selectPlay = function ({ commit, state }, { list, index }) {
   commit(types.SET_PLAYING, true)
   commit(types.SET_FULL_SCREEN, true)
@@ -49,9 +55,6 @@ export const insertSong = function ({ commit, state }, song) {
   }
 
   // 提交commit
-  console.log(playList)
-  console.log(sequenceList)
-  console.log(currentIndex)
   commit(types.SET_PLAYING, true)
   commit(types.SET_FULL_SCREEN, true)
   commit(types.SET_PLAY_LIST, playList)
@@ -59,8 +62,15 @@ export const insertSong = function ({ commit, state }, song) {
   commit(types.SET_CURRENT_INDEX, currentIndex)
 }
 
-function findIndex (list, song) {
-  return list.findIndex(item => {
-    return item.id === song.id
-  })
+// 保存搜索历史
+export const saveSearchHistory = function ({ commit }, query) {
+  commit('SET_SEARCH_HISTORY', saveSearch(query))
+}
+// 删除单个搜索历史
+export const deleteSearchHistory = function ({ commit }, query) {
+  commit('SET_SEARCH_HISTORY', deleteSearch(query))
+}
+// 清空搜索历史
+export const clearSearchHistory = function ({ commit }) {
+  commit('SET_SEARCH_HISTORY', clearSearch())
 }

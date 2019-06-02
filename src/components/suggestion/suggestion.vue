@@ -93,10 +93,15 @@ export default {
       } else {
         this.insertSong(item)
       }
+      this.$emit('select', item)
     },
     // 开始滚动事件
     handleBeforeScroll () {
       this.$emit('listScroll')
+    },
+    // 刷新滚动列表
+    refresh () {
+      this.$refs.suggestion.refresh()
     },
     // 搜索事件
     _search () {

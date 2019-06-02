@@ -23,6 +23,10 @@ export default {
       type: Boolean,
       default: false
     },
+    beforeScroll: {
+      type: Boolean,
+      default: false
+    },
     data: {
       type: Array,
       default: function () {
@@ -82,6 +86,12 @@ export default {
           if (this.scroll.y <= this.scroll.maxScrollY + 50) {
             _self.$emit('scrollEnd')
           }
+        })
+      }
+      // 是否监听滚动开始事件
+      if (this.beforeScroll) {
+        this.scroll.on('beforeScrollStart', () => {
+          _self.$emit('beforeScroll')
         })
       }
     }
