@@ -19,6 +19,10 @@ export default {
       type: Boolean,
       default: false
     },
+    pullup: {
+      type: Boolean,
+      default: false
+    },
     data: {
       type: Array,
       default: function () {
@@ -66,10 +70,18 @@ export default {
         click: this.click
       })
       // 是否监听滚动事件
+      let _self = this
       if (this.listenScroll) {
-        let _self = this
         this.scroll.on('scroll', (pos) => {
           _self.$emit('scroll', pos)
+        })
+      }
+      // 是否上拉加载
+      if (this.pullup) {
+        this.scroll.on('scrollEnd', () => {
+          if (this.scroll.y <= this.scroll.maxScrollY + 50) {
+            _self.$emit('scrollEnd')
+          }
         })
       }
     }

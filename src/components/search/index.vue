@@ -19,6 +19,8 @@
     <div class="suggestion-wrapper" v-show="query">
       <suggestion :query="query"></suggestion>
     </div>
+    <!-- 路由 -->
+    <router-view></router-view>
   </div>
 </template>
 <script>

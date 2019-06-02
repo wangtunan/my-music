@@ -29,6 +29,13 @@ export default new Router({
         { path: ':id', component: () => import('components/top-list/top-list.vue') }
       ]
     },
-    { path: '/search', name: 'SearchIndex', component: () => import('components/search/index') }
+    {
+      path: '/search',
+      name: 'SearchIndex',
+      component: () => import('components/search/index'),
+      children: [
+        { path: ':id', component: () => import('components/singer-detail/singer-detail.vue') }
+      ]
+    }
   ]
 })
