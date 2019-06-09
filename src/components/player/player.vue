@@ -432,6 +432,7 @@ export default {
         this.currentTime = 0
         this.currentLyric = null
       }
+      this.$refs.audio.src = newSong.url
       this.$nextTick(() => {
         this.$refs.audio.play()
       })

@@ -26,7 +26,7 @@
         </div>
       </div>
       <div class="search-result" v-show="query">
-        <suggestion :query="query" :show-singer="false" @list-scroll="blurInput" @select="saveSearch"></suggestion>
+        <suggestion :query="query" :show-singer="false" @list-scroll="blurInput" @select="selectSuggestion"></suggestion>
       </div>
       <top-tips ref="topTips">
         <div class="tip-title">
@@ -92,6 +92,10 @@ export default {
         this.$refs.topTips.show()
         this.insertSong(new Song(song))
       }
+    },
+    selectSuggestion () {
+      this.$refs.topTips.show()
+      this.saveSearch()
     },
     ...mapActions([
       'insertSong'
