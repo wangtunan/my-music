@@ -1,5 +1,5 @@
 <template>
-  <div class="confirm" v-show="isShow">
+  <div class="confirm" v-show="isShow" @click.stop>
     <div class="confirm-wrapper">
       <div class="confirm-content">
         <p class="text">{{text}}</p>

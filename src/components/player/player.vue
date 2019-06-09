@@ -61,7 +61,7 @@
           </div>
           <!-- 底部操作按钮 -->
           <div class="operators">
-            <div class="icon icon-left" @click="handleModeClick">
+            <div class="icon icon-left" @click="changeMode">
               <i :class="iconMode"></i>
             </div>
             <div class="icon icon-left">
@@ -97,27 +97,30 @@
             <i class="icon-mini" :class="iconMini" @click.stop="handelTogglePlay"></i>
           </progress-circle>
         </div>
-        <div class="control">
+        <div class="control" @click.stop="handlePlayListClick">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
-    <audio :src="currentSong.url" @canplay="handleAudioReady" @error="handleAudioError" ref="audio" @timeupdate="handleTimeUpdate" @ended="handleAuduoEnd"></audio>
+    <audio :src="currentSong.url" @playing="handleAudioReady" @error="handleAudioError" ref="audio" @timeupdate="handleTimeUpdate" @ended="handleAuduoEnd"></audio>
+    <playlist ref="playlist"></playlist>
   </div>
 </template>
 <script>
 import ProgressBar from 'base/progress-bar/progress-bar.vue'
 import ProgressCircle from 'base/progress-circle/progress-circle.vue'
 import Scroll from 'base/scroll/index.vue'
+import Playlist from 'components/playlist/playlist.vue'
 import Animations from 'create-keyframe-animation'
 import LyricParser from 'lyric-parser'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
 import { prefixStyle } from 'common/js/dom.js'
 import { playMode } from 'common/js/config.js'
-import { shuffle } from 'common/js/utils.js'
+import { playerMixin } from 'common/js/mixin.js'
 const transform = prefixStyle('transform')
 const transitionDuration = prefixStyle('transitionDuration')
 export default {
+  mixins: [playerMixin],
   data () {
     return {
       playLyric: '', // 当前播放的歌词
@@ -141,17 +144,6 @@ export default {
     iconMini () {
       return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
     },
-    // 计算属性：计算播放模式样式
-    iconMode () {
-      let mode = ''
-      for (const key in playMode) {
-        if (playMode[key] === this.mode) {
-          mode = key
-          break
-        }
-      }
-      return `icon-${mode}`
-    },
     // 计算属性：计算播放器CD的动画样式
     cdClass () {
       return this.playing ? 'play' : 'pause'
@@ -162,12 +154,8 @@ export default {
     },
     ...mapGetters([
       'fullScreen',
-      'playList',
-      'currentSong',
       'playing',
-      'currentIndex',
-      'mode',
-      'sequenceList'
+      'currentIndex'
     ])
   },
   methods: {
@@ -227,7 +215,7 @@ export default {
       if (!this.songReady) {
         return
       }
-      this.setPlaying(!this.playing)
+      this.setPlayState(!this.playing)
       this.currentLyric && this.currentLyric.togglePlay()
     },
     // 常规播放器：上一曲
@@ -269,6 +257,7 @@ export default {
     // 常规播放器：音频准备完毕
     handleAudioReady () {
       this.songReady = true
+      this.savePlayHistory(this.currentSong)
     },
     // 常规播放器：音频请求错误
     handleAudioError () {
@@ -292,7 +281,7 @@ export default {
       let audio = this.$refs.audio
       audio.currentTime = 0
       audio.play()
-      this.setPlaying(true)
+      this.setPlayState(true)
       this.currentLyric && this.currentLyric.seek(0)
     },
     // 常规播放器：进度条进度改变事件
@@ -307,21 +296,6 @@ export default {
         this.handelTogglePlay()
       }
       this.currentShow && this.currentLyric.seek(this.currentTime * 1000)
-    },
-    // 常规播放器：播放模式点击事件
-    handleModeClick () {
-      const mode = (this.mode + 1) % 3
-      this.setPlayMode(mode)
-
-      // 处理随机播放
-      let list = []
-      if (this.mode === playMode.random) {
-        list = shuffle(this.sequenceList)
-      } else {
-        list = this.sequenceList
-      }
-      this.resetCurrentIndex(list)
-      this.setPlayList(list)
     },
     // 常规播放器：获取歌词
     handleGetLyric () {
@@ -409,6 +383,10 @@ export default {
       middleL.style[transitionDuration] = `${durationTime}ms`
       this.touch.inited = false
     },
+    // 常规播放器：播放菜单点击事件
+    handlePlayListClick () {
+      this.$refs.playlist.show()
+    },
     // 迷你播放器：点击事件
     handleMiniPlayerClick () {
       this.setFullScreen(true)
@@ -419,13 +397,6 @@ export default {
       let minute = time / 60 | 0
       let second = time % 60 | 0
       return `${minute}:${second < 10 ? '0' + second : second}`
-    },
-    // 重置当前歌曲的索引
-    resetCurrentIndex (list) {
-      let findIndex = list.findIndex(item => {
-        return item.id === this.currentSong.id
-      })
-      this.setCurrentIndex(findIndex)
     },
     // 获取初始位置和缩放级别
     _getPosAndScale () {
@@ -444,16 +415,15 @@ export default {
       }
     },
     ...mapMutations({
-      setFullScreen: 'SET_FULL_SCREEN',
-      setPlaying: 'SET_PLAYING',
-      setCurrentIndex: 'SET_CURRENT_INDEX',
-      setPlayMode: 'SET_MODE',
-      setPlayList: 'SET_PLAY_LIST'
-    })
+      setFullScreen: 'SET_FULL_SCREEN'
+    }),
+    ...mapActions([
+      'savePlayHistory'
+    ])
   },
   watch: {
     currentSong (newSong, oldSong) {
-      if (newSong.id === oldSong.id) {
+      if (!newSong.id || !newSong.url || newSong.id === oldSong.id) {
         return
       }
       if (this.currentLyric) {
@@ -477,7 +447,8 @@ export default {
   components: {
     ProgressBar,
     ProgressCircle,
-    Scroll
+    Scroll,
+    Playlist
   }
 }
 </script>
