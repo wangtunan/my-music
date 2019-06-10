@@ -11,14 +11,14 @@
         <search-box ref="searchBox" @query="queryChange" placeholder="搜索歌曲"></search-box>
       </div>
       <div class="shortcut" v-show="!query">
-        <switches :switches="switches" :current-index="switchIndex" @switch="handleSwitch"></switches>
+        <switches :switches="switches" :current-index.sync="currentIndex"></switches>
         <div class="list-wrapper">
-          <scroll ref="songList" v-if="switchIndex===0" :data="playHistory" class="list-scroll">
+          <scroll ref="songList" v-if="currentIndex===0" :data="playHistory" class="list-scroll">
             <div class="list-inner">
               <song-list :songs="playHistory" @select="selectSong"></song-list>
             </div>
           </scroll>
-          <scroll ref="searchList" v-if="switchIndex===1" :data="searchHistory" class="list-scroll">
+          <scroll ref="searchList" v-if="currentIndex===1" :data="searchHistory" class="list-scroll">
             <div class="list-inner">
               <search-list :list="searchHistory" @select="addQuery" @delete="deleteSearchHistory"></search-list>
             </div>
@@ -53,7 +53,7 @@ export default {
   data () {
     return {
       showFlag: false,
-      switchIndex: 0,
+      currentIndex: 0,
       switches: [
         { name: '最近播放' },
         { name: '搜索历史' }
@@ -71,7 +71,7 @@ export default {
       this.showFlag = true
       this.showTimer && clearTimeout(this.showTimer)
       this.showTimer = setTimeout(() => {
-        if (this.switchIndex === 0) {
+        if (this.currentIndex === 0) {
           this.$refs.songList.refresh()
         } else {
           this.$refs.searchList.refresh()
@@ -83,9 +83,6 @@ export default {
     },
     queryChange (query) {
       this.query = query
-    },
-    handleSwitch (index) {
-      this.switchIndex = index
     },
     selectSong (song, index) {
       if (index !== 0) {

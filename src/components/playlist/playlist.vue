@@ -20,8 +20,8 @@
             <li class="item" v-for="(item,index) in sequenceList" :key="item.id" ref="songItem" @click="selectItem(item,index)">
               <i class="current" :class="getCurrentIcon(item)"></i>
               <span class="text">{{item.name}}</span>
-              <span class="like">
-                <i class="icon-not-favorite"></i>
+              <span class="like" @click="toggleFavorite(item)">
+                <i class="icon" :class="getFavoriteIcon(item)"></i>
               </span>
               <span class="delete" @click="deleteSong(item)">
                 <i class="icon-delete"></i>
@@ -214,8 +214,10 @@ export default {
             extend-click()
             margin-right: 15px
             color: $color-theme
+            .icon
+              color: $color-theme
             .icon-favorite
-              color: $color-sub-theme
+              color: #d93f30
           .delete
             extend-click()
             color: $color-theme

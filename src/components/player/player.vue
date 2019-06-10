@@ -74,7 +74,7 @@
               <i class="icon-next" @click="handleNextClick"></i>
             </div>
             <div class="icon icon-right">
-              <i class="icon-not-favorite"></i>
+              <i class="icon" :class="favoriteIcon" @click="toggleFavorite(currentSong)"></i>
             </div>
           </div>
         </div>
@@ -636,6 +636,8 @@ export default {
               font-size: 40px
           .icon-right
             text-align: left
+          .icon-favorite
+            color: #d93f30
     .mini-player
       z-index: 180
       position: fixed

@@ -37,12 +37,16 @@ export const playerMixin = {
       }
       return `icon-${mode}`
     },
+    favoriteIcon () {
+      return this.getFavoriteIcon(this.currentSong)
+    },
     // vuex
     ...mapGetters([
       'playList',
       'currentSong',
       'mode',
-      'sequenceList'
+      'sequenceList',
+      'favoriteList'
     ])
   },
   methods: {
@@ -68,13 +72,39 @@ export const playerMixin = {
       })
       this.setCurrentIndex(findIndex)
     },
+    // 喜欢or不喜欢toggle
+    toggleFavorite (song) {
+      if (this.isFavorite(song)) {
+        this.deleteFavoriteList(song)
+      } else {
+        this.saveFavoriteList(song)
+      }
+    },
+    // 获取喜欢的样式
+    getFavoriteIcon (song) {
+      if (this.isFavorite(song)) {
+        return 'icon-favorite'
+      }
+      return 'icon-not-favorite'
+    },
+    // 判断当前歌曲是否喜欢
+    isFavorite (song) {
+      let index = this.favoriteList.findIndex(item => {
+        return item.id === song.id
+      })
+      return index > -1
+    },
     // vuex
     ...mapMutations({
       setPlayState: 'SET_PLAYING',
       setCurrentIndex: 'SET_CURRENT_INDEX',
       setPlayMode: 'SET_MODE',
       setPlayList: 'SET_PLAY_LIST'
-    })
+    }),
+    ...mapActions([
+      'saveFavoriteList',
+      'deleteFavoriteList'
+    ])
   }
 }
 

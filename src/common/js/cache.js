@@ -3,6 +3,8 @@ const SEARCH_PREFIX = '_search_'
 const SEARCH_MAX_LENGTH = 15
 const PLAY_PREFIX = '_play_'
 const PLAY_MAX_LENGTH = 100
+const FAVORITE_PREFIX = '_favorite_'
+const FAVORITE_LENGTH = 200
 
 function insertArray (arr, val, compare, maxLen) {
   let rect = arr.slice()
@@ -64,4 +66,28 @@ export function savePlay (song) {
 // 读取播放历史
 export function getPlay () {
   return storage.get(PLAY_PREFIX, [])
+}
+
+// 喜欢的歌曲
+export function saveFavorite (favorite) {
+  let list = storage.get(FAVORITE_PREFIX, [])
+  list = insertArray(list, favorite, (item) => {
+    return item.id === favorite.id
+  }, FAVORITE_LENGTH)
+  storage.set(FAVORITE_PREFIX, list)
+  return list
+}
+export function getFavorite () {
+  return storage.get(FAVORITE_PREFIX, [])
+}
+export function deleteFavorite (favorite) {
+  let list = storage.get(FAVORITE_PREFIX, [])
+  let index = list.findIndex(item => {
+    return item.id === favorite.id
+  })
+  if (index > -1) {
+    list.splice(index, 1)
+  }
+  storage.set(FAVORITE_PREFIX, list)
+  return list
 }

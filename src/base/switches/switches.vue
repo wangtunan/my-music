@@ -25,7 +25,7 @@ export default {
   },
   methods: {
     switchClick (index) {
-      this.$emit('switch', index)
+      this.$emit('update:currentIndex', index)
     }
   }
 }

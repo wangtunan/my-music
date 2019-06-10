@@ -2,6 +2,9 @@
   <div class="header">
     <span class="icon"></span>
     <span class="text">Chicken Music</span>
+    <router-link class="mine" to="/user" tag="span">
+      <i class="icon-mine"></i>
+    </router-link>
   </div>
 </template>
 <script>
@@ -33,4 +36,13 @@ export default {
     .text
       line-height: 44px
       font-size: $font-size-large
+    .mine
+      position: absolute
+      right: 5px
+      top: 0
+      .icon-mine
+        display: block
+        padding: 12px
+        font-size: 20px
+        color: $color-theme
 </style>

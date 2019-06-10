@@ -36,6 +36,11 @@ export default new Router({
       children: [
         { path: ':id', component: () => import('components/singer-detail/singer-detail.vue') }
       ]
+    },
+    {
+      path: '/user',
+      name: 'UserCenter',
+      component: () => import('components/user/user.vue')
     }
   ]
 })
