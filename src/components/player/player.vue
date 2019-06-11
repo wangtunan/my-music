@@ -24,7 +24,7 @@
           <div class="middle-l" ref="middleL">
             <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd">
-                <img :src="currentSong.image" :class="cdClass" alt="" width="100%" height="100%">
+                <img :src="currentSong.image" ref="cd" :class="cdClass" alt="" width="100%" height="100%">
               </div>
             </div>
             <div class="play-lyric-wrapper">
@@ -73,8 +73,8 @@
             <div class="icon icon-right">
               <i class="icon-next" @click="handleNextClick"></i>
             </div>
-            <div class="icon icon-right">
-              <i class="icon" :class="favoriteIcon" @click="toggleFavorite(currentSong)"></i>
+            <div class="icon icon-right" @click.stop="toggleFavorite(currentSong)">
+              <i class="icon" :class="favoriteIcon"></i>
             </div>
           </div>
         </div>
@@ -84,8 +84,8 @@
     <transition name="mini">
       <div class="mini-player" v-show="!fullScreen" @click="handleMiniPlayerClick">
         <div class="icon">
-          <div class="img-wrapper">
-            <img :src= "currentSong.image" :class="cdClass" alt="" width="40" height="40">
+          <div class="img-wrapper" ref="miniWrapper">
+            <img ref="miniImage" :src="currentSong.image" :class="cdClass" alt="" width="40" height="40">
           </div>
         </div>
         <div class="text">
@@ -300,6 +300,9 @@ export default {
     // 常规播放器：获取歌词
     handleGetLyric () {
       this.currentSong.getLyric().then(lyric => {
+        if (this.currentSong.lyric !== lyric) {
+          return
+        }
         this.currentLyric = new LyricParser(lyric, this.handleLyricPlay)
         if (this.playing) {
           this.currentLyric.play()
@@ -414,6 +417,17 @@ export default {
         scale
       }
     },
+    // 计算内层的transform并传递给外层
+    syncWrapperTransform (wrapper, inner) {
+      if (!this.$refs[wrapper]) {
+        return
+      }
+      let imageWrapper = this.$refs[wrapper]
+      let image = this.$refs[inner]
+      let wTransform = getComputedStyle(imageWrapper)[transform]
+      let iTransform = getComputedStyle(image)[transform]
+      imageWrapper.style[transform] = wTransform === 'none' ? iTransform : iTransform.concat(' ', wTransform)
+    },
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN'
     }),
@@ -432,10 +446,14 @@ export default {
         this.currentTime = 0
         this.currentLyric = null
       }
-      this.$refs.audio.src = newSong.url
-      this.$nextTick(() => {
+      let audio = this.$refs.audio
+      if (audio) {
+        this.$refs.audio.src = newSong.url
+      }
+      clearTimeout(this.timer)
+      this.timer = setTimeout(() => {
         this.$refs.audio.play()
-      })
+      }, 1000)
       this.handleGetLyric()
     },
     playing (newVal) {
@@ -443,6 +461,13 @@ export default {
       this.$nextTick(() => {
         newVal ? audio.play() : audio.pause()
       })
+      if (!newVal) {
+        if (this.fullScreen) {
+          this.syncWrapperTransform('cdWrapper', 'cd')
+        } else {
+          this.syncWrapperTransform('miniWrapper', 'miniImage')
+        }
+      }
     }
   },
   components: {
@@ -456,22 +481,6 @@ export default {
 <style lang="stylus" scoped>
   @import '~common/stylus/variable.styl'
   @import '~common/stylus/mixin.styl'
-  // 常规播放器动画
-  .normal-enter-active, .normal-leave-active
-    transition: all 0.4s
-    .top, .bottom
-      transition: all 0.4s cubic-bezier(0.86, 0.18, 0.82, 1.32)
-  .normal-enter, .normal-leave-to
-    opacity: 0
-    .top
-      transform: translate3d(0, -100px, 0)
-    .bottom
-      transform: translate3d(0, 100px, 0)
-  // 迷你播放器动画
-  .mini-enter-active, .mini-leave-active
-    transition: all 0.4s
-  .mini-enter, .mini-leave-to
-    opacity: 0
   // CD旋转动画
   @keyframes rotate {
     from {
@@ -489,6 +498,17 @@ export default {
       top: 0
       bottom: 0
       background-color: $color-background
+      // 常规播放器动画
+      &.normal-enter-active, &.normal-leave-active
+        transition: all 0.4s
+        .top, .bottom
+          transition: all 0.4s cubic-bezier(0.86, 0.18, 0.82, 1.32)
+      &.normal-enter, &.normal-leave-to
+        opacity: 0
+        .top
+          transform: translate3d(0, -100px, 0)
+        .bottom
+          transform: translate3d(0, 100px, 0)
       .background
         position: fixed
         left: 0
@@ -648,6 +668,11 @@ export default {
       display: flex
       align-items: center
       background: $color-highlight-background
+      // 迷你播放器动画
+      &.mini-enter-active, &.mini-leave-active
+        transition: all 0.4s
+      &.mini-enter, &.mini-leave-to
+        opacity: 0
       .icon
         flex: 0 0 40px
         padding: 0 10px 0 20px

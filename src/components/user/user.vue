@@ -7,21 +7,24 @@
       <div class="switch-container">
         <switches :switches="switches" :currentIndex.sync="currentIndex"></switches>
       </div>
-      <div class="play-btn">
+      <div class="play-btn" @click="handleRandomClick">
         <i class="icon-play"></i>
         <span class="text">随机播放全部</span>
       </div>
       <div class="list-wrapper" ref="listWrapper">
-        <scroll ref="favoriteList" v-show="currentIndex===0" :data="favoriteList" class="list-scroll">
+        <scroll ref="favoriteList" v-if="currentIndex===0" :data="favoriteList" class="list-scroll">
           <div class="list-inner">
-            <song-list :songs="favoriteList"></song-list>
+            <song-list :songs="favoriteList" @select="selectSong"></song-list>
           </div>
         </scroll>
-        <scroll ref="playList" v-show="currentIndex===1" :data="playHistory" class="list-scroll">
+        <scroll ref="playList" v-if="currentIndex===1" :data="playHistory" class="list-scroll">
           <div class="list-inner">
-            <song-list :songs="playHistory"></song-list>
+            <song-list :songs="playHistory" @select="selectSong"></song-list>
           </div>
         </scroll>
+      </div>
+      <div class="no-result-container" v-show="!noResultList || !noResultList.length">
+        <no-result :title="title"></no-result>
       </div>
     </div>
   </transition>
@@ -30,7 +33,9 @@
 import Switches from 'base/switches/switches.vue'
 import SongList from 'base/song-list/song-list.vue'
 import Scroll from 'base/scroll/index.vue'
-import { mapGetters } from 'vuex'
+import NoResult from 'base/no-result/no-result.vue'
+import Song from 'common/js/song.js'
+import { mapGetters, mapActions } from 'vuex'
 import { playListMixin } from 'common/js/mixin.js'
 export default {
   name: 'UserCenter',
@@ -45,12 +50,19 @@ export default {
     }
   },
   computed: {
+    title () {
+      return this.currentIndex === 0 ? '暂无收藏的歌曲' : '你还没有听过歌曲'
+    },
+    noResultList () {
+      return this.currentIndex === 0 ? this.favoriteList : this.playHistory
+    },
     ...mapGetters([
       'favoriteList',
       'playHistory'
     ])
   },
   methods: {
+    // 计算bottom
     handlePlayList (list) {
       let bottom = list.length > 0 ? '60px' : ''
       let favoriteList = this.$refs.favoriteList
@@ -59,14 +71,34 @@ export default {
       favoriteList && favoriteList.refresh()
       playList && playList.refresh()
     },
+    // 随机播放
+    handleRandomClick () {
+      let list = this.noResultList.slice()
+      list = list.map(item => {
+        return new Song(item)
+      })
+      this.randomPlay({
+        list: list
+      })
+    },
+    // 选择歌曲
+    selectSong (song) {
+      this.insertSong(new Song(song))
+    },
     backClick () {
       this.$router.back()
-    }
+    },
+    // vuex
+    ...mapActions([
+      'insertSong',
+      'randomPlay'
+    ])
   },
   components: {
     Switches,
     SongList,
-    Scroll
+    Scroll,
+    NoResult
   }
 }
 </script>
@@ -124,4 +156,10 @@ export default {
         overflow: hidden
         .list-inner
           padding: 20px 30px
+    .no-result-container
+      position: absolute
+      left: 0
+      width: 100%
+      top: 50%
+      transform: translateY(-50%)
 </style>
